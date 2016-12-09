@@ -9,7 +9,8 @@ import static Client.Constants.ClientType;
  */
 public class ClientCli {
     public static void main(String[] args) throws IOException, InterruptedException {
-        ClientRunner clientRunner = new ClientRunner("localhost", 55555, 10, 3, 1000, 5, ClientType.TCP_PERMANENT);
-        System.out.println(clientRunner.run());
+        ClientRunner clientRunner = new ClientRunner("localhost", 55555, 1000, 3, 200, 2, ClientType.TCP_PERMANENT);
+        clientRunner.run();
+        System.out.println(clientRunner.getStatistics());
     }
 }

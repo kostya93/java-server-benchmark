@@ -2,21 +2,23 @@ package Client;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.OptionalDouble;
+import java.util.concurrent.atomic.LongAdder;
 
-import static Client.Constants.ClientType;
+import static Client.Constants.*;
+import static Common.Constants.*;
 
 /**
  * Created by kostya on 08.12.2016.
  */
 
 public class ClientRunner {
-    private final static int NANOS_IN_MILLIS = 1_000_000;
-
     private final String serverHost;
     private final int serverPort;
     private final int numOfElements;
@@ -26,6 +28,7 @@ public class ClientRunner {
     private final ClientType clientType;
 
     private final List<Thread> clients;
+    private final LongAdder clientsTime = new LongAdder();
 
     public ClientRunner(String serverHost,
                         int serverPort,
@@ -44,16 +47,14 @@ public class ClientRunner {
         this.clientType = clientType;
     }
 
-    public long run() {
-        Long[] millisForClient = new Long[numOfClient];
+    public void run() {
         for (int i = 0; i < numOfClient; i++) {
-            int finalI = i;
             clients.add(new Thread(() -> {
                 try {
                     long start = System.nanoTime();
                     getClient().run(serverHost, serverPort, numOfElements, delta, numOfRequests);
                     long end = System.nanoTime();
-                    millisForClient[finalI] = (end - start)/NANOS_IN_MILLIS;
+                    clientsTime.add((end - start) / NANOS_IN_MILLIS);
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException("Something wrong in Client.run()", e);
                 }
@@ -67,7 +68,8 @@ public class ClientRunner {
                 e.printStackTrace();
             }
         });
-        return average(millisForClient);
+
+
     }
 
     private Client getClient() {
@@ -78,8 +80,17 @@ public class ClientRunner {
         throw new NotImplementedException();
     }
 
-    private long average(Long[] arr) {
-        OptionalDouble optionalDouble = Arrays.stream(arr).mapToDouble(it -> it).average();
-        return optionalDouble.isPresent() ? (long) optionalDouble.getAsDouble() : -1L;
+    public Statistics getStatistics() throws IOException {
+        try (Socket socket = new Socket(serverHost, serverPort)) {
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+            outputStream.writeInt(MessageType.STATS);
+            outputStream.flush();
+            Statistics statistics = new Statistics();
+            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+            statistics.setTimePerClientServer(dataInputStream.readLong()/numOfClient);
+            statistics.setTimePerRequestServer(dataInputStream.readLong()/numOfRequests);
+            statistics.setTimePerClient(clientsTime.longValue()/numOfClient);
+            return statistics;
+        }
     }
 }
