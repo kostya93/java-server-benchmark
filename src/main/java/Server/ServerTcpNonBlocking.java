@@ -25,7 +25,7 @@ public class ServerTcpNonBlocking implements Server {
     private Selector selector;
     private Thread serverThread;
     private ServerSocketChannel serverSocketChannel;
-    private ExecutorService executor = Executors.newFixedThreadPool(5);
+    private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private final Object registerLock = new Object();
     private final LongAdder timeForClients = new LongAdder();
     private final LongAdder timeForRequests = new LongAdder();
