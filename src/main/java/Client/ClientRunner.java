@@ -76,6 +76,8 @@ public class ClientRunner {
         switch (clientType) {
             case TCP_PERMANENT:
                 return new ClientTcpPermanent();
+            case TCP_NON_PERMANENT:
+                return new ClientTcpNonPermanent();
         }
         throw new NotImplementedException();
     }

@@ -1,5 +1,4 @@
-import Server.Server;
-import Server.ServerTcpNonBlocking;
+import Server.*;
 
 import java.io.IOException;
 
@@ -8,7 +7,7 @@ import java.io.IOException;
  */
 public class ServerCli {
     public static void main(String[] args) throws IOException {
-        Server server = new ServerTcpNonBlocking();
+        Server server = new ServerTcpOneThreadSequential();
         server.start(55555);
     }
 }
