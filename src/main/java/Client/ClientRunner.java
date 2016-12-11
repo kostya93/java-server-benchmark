@@ -5,7 +5,11 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
@@ -78,21 +82,45 @@ public class ClientRunner {
                 return new ClientTcpPermanent();
             case TCP_NON_PERMANENT:
                 return new ClientTcpNonPermanent();
+            case UDP:
+                return new ClientUdp();
         }
         throw new NotImplementedException();
     }
 
     public Statistics getStatistics() throws IOException {
-        try (Socket socket = new Socket(serverHost, serverPort)) {
-            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-            outputStream.writeInt(MessageType.STATS);
-            outputStream.flush();
-            Statistics statistics = new Statistics();
-            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            statistics.setTimePerClientServer(dataInputStream.readLong() / numOfClient);
-            statistics.setTimePerRequestServer(dataInputStream.readLong() / numOfRequests);
-            statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
-            return statistics;
+        switch (clientType) {
+            case TCP_NON_PERMANENT:
+            case TCP_PERMANENT:
+                try (Socket socket = new Socket(serverHost, serverPort)) {
+                    DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+                    outputStream.writeInt(MessageType.STATS);
+                    outputStream.flush();
+                    Statistics statistics = new Statistics();
+                    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                    statistics.setTimePerClientServer(dataInputStream.readLong() / numOfClient);
+                    statistics.setTimePerRequestServer(dataInputStream.readLong() / numOfRequests);
+                    statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
+                    return statistics;
+                }
+            case UDP:
+                try (DatagramSocket datagramSocket = new DatagramSocket()) {
+                    byte[] data = ByteBuffer.allocate(Integer.BYTES).putInt(MessageType.STATS).array();
+                    DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(serverHost), serverPort);
+                    datagramSocket.send(packet);
+
+                    data = new byte[Long.BYTES * 2];
+                    packet.setData(data);
+                    datagramSocket.receive(packet);
+
+                    ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData());
+                    Statistics statistics = new Statistics();
+                    statistics.setTimePerClientServer(byteBuffer.getLong() / numOfClient);
+                    statistics.setTimePerRequestServer(byteBuffer.getLong() / numOfRequests);
+                    statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
+                    return statistics;
+                }
         }
+        throw new NotImplementedException();
     }
 }

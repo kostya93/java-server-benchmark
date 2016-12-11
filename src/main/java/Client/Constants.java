@@ -6,6 +6,7 @@ package Client;
 public class Constants {
     public enum ClientType {
         TCP_PERMANENT,
-        TCP_NON_PERMANENT
+        TCP_NON_PERMANENT,
+        UDP
     }
 }

@@ -6,26 +6,23 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.LongAdder;
 
 import static Common.Constants.MessageType;
 import static Common.Constants.NANOS_IN_MILLIS;
 
 /**
- * Server creates a task to communicate by TCP with each client,
- * and summit it to CachedThreadPool.
+ * Server creates a separate thread to communicate by TCP with each client.
  */
-public class ServerTcpCachedThreadPoolImpl implements Server {
+public class ServerTcpThread implements Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private List<Thread> clientThreads = new LinkedList<>();
 
     private final LongAdder timeForClients = new LongAdder();
     private final LongAdder timeForRequests = new LongAdder();
@@ -41,7 +38,9 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                executor.submit(() -> processClient(clientSocket));
+                Thread clientThread = new Thread(() -> processClient(clientSocket));
+                clientThreads.add(clientThread);
+                clientThread.start();
             }
         } catch (Exception ignored) {
         }
@@ -68,6 +67,7 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
                         throw new NotImplementedException();
                 }
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -79,11 +79,10 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
         }
     }
 
-    private void executeStats(OutputStream outputStream) throws IOException {
-        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-        dataOutputStream.writeLong(timeForClients.longValue());
-        dataOutputStream.writeLong(timeForRequests.longValue());
-        dataOutputStream.flush();
+    private void executeStats(DataOutputStream outputStream) throws IOException {
+        outputStream.writeLong(timeForClients.longValue());
+        outputStream.writeLong(timeForRequests.longValue());
+        outputStream.flush();
     }
 
     private void executeArray(DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
@@ -92,9 +91,9 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
         inputStream.readFully(data);
         List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
 
-        long startSort = System.nanoTime()/NANOS_IN_MILLIS;
+        long startSort = System.nanoTime() / NANOS_IN_MILLIS;
         List<Integer> sortedList = Server.sort(list);
-        long endSort = System.nanoTime()/NANOS_IN_MILLIS;
+        long endSort = System.nanoTime() / NANOS_IN_MILLIS;
 
         timeForClients.add(endSort - startSort);
 
@@ -113,8 +112,8 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
         }
 
         serverSocket.close();
-        serverSocket = null;
-        executor.shutdown();
+        clientThreads.forEach(Thread::interrupt);
+        clientThreads.clear();
         serverThread.interrupt();
     }
 }

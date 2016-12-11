@@ -11,7 +11,7 @@ import java.net.Socket;
 /**
  * Client make new connection for each request;
  */
-public class ClientTcpNonPermanent implements Client {
+class ClientTcpNonPermanent implements Client {
     @Override
     public void run(String host, int port, int N, int delta, int X) throws IOException, InterruptedException {
         for (int i = 0; i < X; i++) {
