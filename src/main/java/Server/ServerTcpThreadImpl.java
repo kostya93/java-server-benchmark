@@ -38,8 +38,7 @@ public class ServerTcpThreadImpl implements Server {
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                Long startTime = System.nanoTime() / NANOS_IN_MILLIS;
-                Thread clientThread = new Thread(() -> processClient(startTime, clientSocket));
+                Thread clientThread = new Thread(() -> processClient(clientSocket));
                 clientThreads.add(clientThread);
                 clientThread.start();
             }
@@ -47,7 +46,7 @@ public class ServerTcpThreadImpl implements Server {
         }
     }
 
-    private void processClient(long startClientTime, Socket clientSocket) {
+    private void processClient(Socket clientSocket) {
         try {
             DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
             DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
@@ -68,8 +67,6 @@ public class ServerTcpThreadImpl implements Server {
                         throw new NotImplementedException();
                 }
             }
-            long endClientTime = System.nanoTime() / NANOS_IN_MILLIS;
-            timeForClients.add(endClientTime - startClientTime);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -92,10 +89,14 @@ public class ServerTcpThreadImpl implements Server {
         int size = inputStream.readInt();
         byte[] data = new byte[size];
         inputStream.readFully(data);
+        List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
 
-        List<Integer> sortedList = Server.sort(
-                new ArrayList<>(Message.Array.parseFrom(data).getArrayList())
-        );
+        long startSort = System.nanoTime() / NANOS_IN_MILLIS;
+        List<Integer> sortedList = Server.sort(list);
+        long endSort = System.nanoTime() / NANOS_IN_MILLIS;
+
+        timeForClients.add(endSort - startSort);
+
         Message.Array
                 .newBuilder()
                 .addAllArray(sortedList)

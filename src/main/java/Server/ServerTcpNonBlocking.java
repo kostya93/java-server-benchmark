@@ -88,8 +88,6 @@ public class ServerTcpNonBlocking implements Server {
                                         key.interestOps(SelectionKey.OP_WRITE);
                                         break;
                                     case MessageType.END_ARRAYS:
-                                        long timeEndClient = System.nanoTime() / NANOS_IN_MILLIS;
-                                        timeForClients.add(timeEndClient - holder.getTimeStartClient());
                                         client.close();
                                         break;
                                 }
@@ -139,7 +137,15 @@ public class ServerTcpNonBlocking implements Server {
             SelectableChannel client = key.channel();
             Holder holder = (Holder) key.attachment();
             byte[] data = holder.getByteBuffer().array();
-            List<Integer> sortedList = Server.sort(new ArrayList<>(Message.Array.parseFrom(data).getArrayList()));
+
+            List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
+
+            long startSort = System.nanoTime() / NANOS_IN_MILLIS;
+            List<Integer> sortedList = Server.sort(list);
+            long endSort = System.nanoTime() / NANOS_IN_MILLIS;
+
+            timeForClients.add(endSort - startSort);
+
             byte[] sortedData = Message.Array.newBuilder().addAllArray(sortedList).build().toByteArray();
             ByteBuffer byteBuffer = ByteBuffer.wrap(sortedData);
             byteBuffer.rewind();

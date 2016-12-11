@@ -13,8 +13,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
 class Holder {
     private ByteBuffer byteBuffer = ByteBuffer.allocate(Integer.BYTES);
     private State state = State.READING_TYPE;
-    private long timeStartClient = System.nanoTime() / NANOS_IN_MILLIS;
-    private long timeStartRequest = System.nanoTime() / NANOS_IN_MILLIS;
+    private long timeStartRequest;
 
     enum State {
         READING_TYPE,
@@ -60,14 +59,6 @@ class Holder {
             }
         }
         return write;
-    }
-
-    long getTimeStartClient() {
-        return timeStartClient;
-    }
-
-    public void setTimeStartClient(long timeStartClient) {
-        this.timeStartClient = timeStartClient;
     }
 
     long getTimeStartRequest() {

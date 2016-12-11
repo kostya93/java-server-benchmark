@@ -41,14 +41,13 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                Long startTime = System.nanoTime() / NANOS_IN_MILLIS;
-                executor.submit(() -> processClient(startTime, clientSocket));
+                executor.submit(() -> processClient(clientSocket));
             }
         } catch (Exception ignored) {
         }
     }
 
-    private void processClient(long startClientTime, Socket clientSocket) {
+    private void processClient(Socket clientSocket) {
         try {
             DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
             DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
@@ -69,9 +68,6 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
                         throw new NotImplementedException();
                 }
             }
-            long endClientTime = System.nanoTime() / NANOS_IN_MILLIS;
-            timeForClients.add(endClientTime - startClientTime);
-
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -94,10 +90,14 @@ public class ServerTcpCachedThreadPoolImpl implements Server {
         int size = inputStream.readInt();
         byte[] data = new byte[size];
         inputStream.readFully(data);
+        List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
 
-        List<Integer> sortedList = Server.sort(
-                new ArrayList<>(Message.Array.parseFrom(data).getArrayList())
-        );
+        long startSort = System.nanoTime()/NANOS_IN_MILLIS;
+        List<Integer> sortedList = Server.sort(list);
+        long endSort = System.nanoTime()/NANOS_IN_MILLIS;
+
+        timeForClients.add(endSort - startSort);
+
         Message.Array
                 .newBuilder()
                 .addAllArray(sortedList)

@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 
+import static Common.Constants.NANOS_IN_MILLIS;
+
 /**
  * The server performs a single-threaded sequential processing.
  * Requests are processed sequentially with
@@ -50,7 +52,10 @@ public class ServerTcpOneThreadSequential implements Server {
         int messageType = inputStream.readInt();
         switch (messageType) {
             case Constants.MessageType.ARRAY:
+                long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
                 executeArray(inputStream, outputStream);
+                long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+                timeForRequests.add(endRequestTime - startRequestTime);
                 break;
             case Constants.MessageType.STATS:
                 executeStats(outputStream);
@@ -70,10 +75,14 @@ public class ServerTcpOneThreadSequential implements Server {
         int size = inputStream.readInt();
         byte[] data = new byte[size];
         inputStream.readFully(data);
+        List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
 
-        List<Integer> sortedList = Server.sort(
-                new ArrayList<>(Message.Array.parseFrom(data).getArrayList())
-        );
+        long startSort = System.nanoTime()/NANOS_IN_MILLIS;
+        List<Integer> sortedList = Server.sort(list);
+        long endSort = System.nanoTime()/NANOS_IN_MILLIS;
+
+        timeForClients.add(endSort - startSort);
+
         Message.Array
                 .newBuilder()
                 .addAllArray(sortedList)
