@@ -3,18 +3,19 @@ package Client;
 /**
  * Created by kostya on 09.12.2016.
  */
-public class Statistics {
+class Statistics {
     private long timePerClientServer;
     private long timePerRequestServer;
     private long timePerClient;
 
-    public Statistics() {}
+    Statistics() {
+    }
 
     public long getTimePerClientServer() {
         return timePerClientServer;
     }
 
-    public void setTimePerClientServer(long timePerClientServer) {
+    void setTimePerClientServer(long timePerClientServer) {
         this.timePerClientServer = timePerClientServer;
     }
 
@@ -22,7 +23,7 @@ public class Statistics {
         return timePerRequestServer;
     }
 
-    public void setTimePerRequestServer(long timePerRequestServer) {
+    void setTimePerRequestServer(long timePerRequestServer) {
         this.timePerRequestServer = timePerRequestServer;
     }
 
@@ -30,7 +31,7 @@ public class Statistics {
         return timePerClient;
     }
 
-    public void setTimePerClient(long timePerClient) {
+    void setTimePerClient(long timePerClient) {
         this.timePerClient = timePerClient;
     }
 

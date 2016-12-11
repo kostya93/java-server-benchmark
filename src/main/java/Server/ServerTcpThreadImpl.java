@@ -3,7 +3,9 @@ package Server;
 import Common.Message;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -31,29 +33,32 @@ public class ServerTcpThreadImpl implements Server {
         serverThread = new Thread(this::runServer);
         serverThread.start();
     }
+
     private void runServer() {
         try {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                Long startTime = System.nanoTime()/NANOS_IN_MILLIS;
+                Long startTime = System.nanoTime() / NANOS_IN_MILLIS;
                 Thread clientThread = new Thread(() -> processClient(startTime, clientSocket));
                 clientThreads.add(clientThread);
                 clientThread.start();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
+
     private void processClient(long startClientTime, Socket clientSocket) {
         try {
             DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
             DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
 
             int messageType;
-            while ((messageType = inputStream.readInt()) != MessageType.END) {
+            while ((messageType = inputStream.readInt()) != MessageType.END_ARRAYS) {
                 switch (messageType) {
                     case MessageType.ARRAY:
-                        long startRequestTime = System.nanoTime()/NANOS_IN_MILLIS;
+                        long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
                         executeArray(inputStream, outputStream);
-                        long endRequestTime = System.nanoTime()/NANOS_IN_MILLIS;
+                        long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
                         timeForRequests.add(endRequestTime - startRequestTime);
                         break;
                     case MessageType.STATS:
@@ -63,7 +68,7 @@ public class ServerTcpThreadImpl implements Server {
                         throw new NotImplementedException();
                 }
             }
-            long endClientTime = System.nanoTime()/NANOS_IN_MILLIS;
+            long endClientTime = System.nanoTime() / NANOS_IN_MILLIS;
             timeForClients.add(endClientTime - startClientTime);
 
         } catch (IOException e) {
@@ -83,15 +88,19 @@ public class ServerTcpThreadImpl implements Server {
         outputStream.flush();
     }
 
-    private void executeArray(InputStream inputStream, OutputStream outputStream) throws IOException {
+    private void executeArray(DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
+        int size = inputStream.readInt();
+        byte[] data = new byte[size];
+        inputStream.readFully(data);
+
         List<Integer> sortedList = Server.sort(
-                new ArrayList<>(Message.Array.parseDelimitedFrom(inputStream).getArrayList())
+                new ArrayList<>(Message.Array.parseFrom(data).getArrayList())
         );
         Message.Array
                 .newBuilder()
                 .addAllArray(sortedList)
                 .build()
-                .writeDelimitedTo(outputStream);
+                .writeTo(outputStream);
         outputStream.flush();
     }
 

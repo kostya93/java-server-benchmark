@@ -5,14 +5,14 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 
-import static Client.Constants.*;
-import static Common.Constants.*;
+import static Client.Constants.ClientType;
+import static Common.Constants.MessageType;
+import static Common.Constants.NANOS_IN_MILLIS;
 
 /**
  * Created by kostya on 08.12.2016.
@@ -87,9 +87,9 @@ public class ClientRunner {
             outputStream.flush();
             Statistics statistics = new Statistics();
             DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            statistics.setTimePerClientServer(dataInputStream.readLong()/numOfClient);
-            statistics.setTimePerRequestServer(dataInputStream.readLong()/numOfRequests);
-            statistics.setTimePerClient(clientsTime.longValue()/numOfClient);
+            statistics.setTimePerClientServer(dataInputStream.readLong() / numOfClient);
+            statistics.setTimePerRequestServer(dataInputStream.readLong() / numOfRequests);
+            statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
             return statistics;
         }
     }
