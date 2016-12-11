@@ -34,7 +34,7 @@ public class ServerTcpNonBlocking implements Server {
     public void start(int port) throws IOException {
         selector = Selector.open();
         serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.bind(new InetSocketAddress("localhost", port));
+        serverSocketChannel.bind(new InetSocketAddress(port));
         serverSocketChannel.configureBlocking(false);
         serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT, null);
         serverThread = new Thread(this::runServer);

@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-import static Common.Constants.NANOS_IN_MILLIS;
-
 /**
  * Created by kostya on 09.12.2016.
  */
@@ -30,35 +28,39 @@ class Holder {
 
     int read(SocketChannel client) throws IOException {
         int read = client.read(byteBuffer);
-        if (read > 0 && isBufferFull()) {
-            switch (state) {
-                case READING_TYPE:
-                    state = State.END_READING_TYPE;
-                    break;
-                case READING_SIZE:
-                    state = State.END_READING_SIZE;
-                    break;
-                case READING_ARRAY:
-                    state = State.END_READING_ARRAY;
-                    break;
-            }
-        }
+        checkState();
         return read;
     }
 
     int write(SocketChannel client) throws IOException {
         int write = client.write(byteBuffer);
-        if (write > 0 && isBufferFull()) {
-            switch (state) {
-                case WRITING_ARRAY:
-                    state = State.END_WRITING_ARRAY;
-                    break;
-                case WRITING_STATS:
-                    state = State.END_WRITING_STATS;
-                    break;
-            }
-        }
+        checkState();
         return write;
+    }
+
+    void checkState() {
+
+        if (!isBufferFull()) {
+            return;
+        }
+
+        switch (state) {
+            case READING_TYPE:
+                state = State.END_READING_TYPE;
+                break;
+            case READING_SIZE:
+                state = State.END_READING_SIZE;
+                break;
+            case READING_ARRAY:
+                state = State.END_READING_ARRAY;
+                break;
+            case WRITING_ARRAY:
+                state = State.END_WRITING_ARRAY;
+                break;
+            case WRITING_STATS:
+                state = State.END_WRITING_STATS;
+                break;
+        }
     }
 
     long getTimeStartRequest() {
