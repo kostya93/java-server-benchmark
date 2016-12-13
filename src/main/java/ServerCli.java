@@ -7,7 +7,6 @@ import java.io.IOException;
  */
 public class ServerCli {
     public static void main(String[] args) throws IOException {
-        Server server = new ServerUdpThreadPool();
-        server.start(55555);
+        ServerRunner.run(55555);
     }
 }

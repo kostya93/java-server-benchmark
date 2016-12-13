@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 import static Common.Constants.MessageType;
@@ -25,7 +26,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
 public class ServerTcpCachedThreadPool implements Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private ExecutorService executor = Executors.newCachedThreadPool();
 
     private final LongAdder timeForClients = new LongAdder();
     private final LongAdder timeForRequests = new LongAdder();
@@ -84,6 +85,7 @@ public class ServerTcpCachedThreadPool implements Server {
         dataOutputStream.writeLong(timeForClients.longValue());
         dataOutputStream.writeLong(timeForRequests.longValue());
         dataOutputStream.flush();
+        reset();
     }
 
     private void executeArray(DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
@@ -116,5 +118,18 @@ public class ServerTcpCachedThreadPool implements Server {
         serverSocket = null;
         executor.shutdown();
         serverThread.interrupt();
+    }
+
+    @Override
+    public void reset() {
+        timeForClients.reset();
+        timeForRequests.reset();
+        executor.shutdown();
+        try {
+            executor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        executor = Executors.newCachedThreadPool();
     }
 }

@@ -149,6 +149,7 @@ public class ServerTcpAsync implements Server {
                         startRead(holder, client);
                         break;
                     case END_WRITING_STATS:
+                        reset();
                         break;
                 }
             }
@@ -169,5 +170,11 @@ public class ServerTcpAsync implements Server {
         serverThread.interrupt();
         listener.close();
         listener = null;
+    }
+
+    @Override
+    public void reset() {
+        timeForClients.reset();
+        timeForRequests.reset();
     }
 }

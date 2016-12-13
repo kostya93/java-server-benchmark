@@ -62,6 +62,7 @@ public class ServerTcpThread implements Server {
                         break;
                     case MessageType.STATS:
                         executeStats(outputStream);
+                        reset();
                         return;
                     default:
                         throw new NotImplementedException();
@@ -115,5 +116,13 @@ public class ServerTcpThread implements Server {
         clientThreads.forEach(Thread::interrupt);
         clientThreads.clear();
         serverThread.interrupt();
+    }
+
+    @Override
+    public void reset() {
+        timeForClients.reset();
+        timeForRequests.reset();
+        clientThreads.forEach(Thread::interrupt);
+        clientThreads.clear();
     }
 }

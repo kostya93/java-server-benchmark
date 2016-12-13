@@ -59,6 +59,7 @@ public class ServerTcpOneThreadSequential implements Server {
                 break;
             case Constants.MessageType.STATS:
                 executeStats(outputStream);
+                reset();
                 break;
             default:
                 throw new NotImplementedException();
@@ -100,5 +101,11 @@ public class ServerTcpOneThreadSequential implements Server {
         serverThread.interrupt();
         serverSocket.close();
         serverSocket = null;
+    }
+
+    @Override
+    public void reset() {
+        timeForClients.reset();
+        timeForRequests.reset();
     }
 }

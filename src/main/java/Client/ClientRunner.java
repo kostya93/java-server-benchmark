@@ -25,10 +25,6 @@ import static Common.Constants.NANOS_IN_MILLIS;
 public class ClientRunner {
     private final String serverHost;
     private final int serverPort;
-    private final int numOfElements;
-    private final int numOfClient;
-    private final int delta;
-    private final int numOfRequests;
     private final ClientType clientType;
 
     private final List<Thread> clients;
@@ -36,22 +32,17 @@ public class ClientRunner {
 
     public ClientRunner(String serverHost,
                         int serverPort,
-                        int numOfElements,
-                        int numOfClient,
-                        int delta,
-                        int numOfRequests,
                         ClientType clientType) {
         this.serverHost = serverHost;
         this.serverPort = serverPort;
-        this.numOfElements = numOfElements;
-        this.numOfClient = numOfClient;
-        this.delta = delta;
-        this.numOfRequests = numOfRequests;
-        this.clients = new ArrayList<>(numOfClient);
+        this.clients = new ArrayList<>();
         this.clientType = clientType;
     }
 
-    public void run() {
+    public Statistics run(int numOfElements,
+                          int numOfClient,
+                          int delta,
+                          int numOfRequests) throws IOException {
         for (int i = 0; i < numOfClient; i++) {
             clients.add(new Thread(() -> {
                 try {
@@ -72,8 +63,16 @@ public class ClientRunner {
                 e.printStackTrace();
             }
         });
+        clients.clear();
+        return getStatistics(numOfClient, numOfRequests);
+    }
 
-
+    public void configureServer(int serverType) throws IOException {
+        try (Socket socket = new Socket(serverHost, serverPort)) {
+            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+            outputStream.writeInt(serverType);
+            outputStream.flush();
+        }
     }
 
     private Client getClient() {
@@ -88,7 +87,7 @@ public class ClientRunner {
         throw new NotImplementedException();
     }
 
-    public Statistics getStatistics() throws IOException {
+    private Statistics getStatistics(int numOfClient, int numOfRequests) throws IOException {
         switch (clientType) {
             case TCP_NON_PERMANENT:
             case TCP_PERMANENT:

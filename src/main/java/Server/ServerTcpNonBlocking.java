@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 import static Common.Constants.MessageType;
@@ -121,6 +122,7 @@ public class ServerTcpNonBlocking implements Server {
                                 break;
                             case END_WRITING_STATS:
                                 client.close();
+                                reset();
                                 break;
                         }
                     }
@@ -171,4 +173,16 @@ public class ServerTcpNonBlocking implements Server {
         executor.shutdown();
     }
 
+    @Override
+    public void reset() {
+        timeForClients.reset();
+        timeForRequests.reset();
+        executor.shutdown();
+        try {
+            executor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
 }

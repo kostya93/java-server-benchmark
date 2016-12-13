@@ -106,6 +106,7 @@ public class ServerUdpThread implements Server {
                                 .array();
                         DatagramPacket datagramPacket = new DatagramPacket(data, data.length, clientAddr, clientPort);
                         clientSocket.send(datagramPacket);
+                        reset();
                         return;
                     }
                     default:
@@ -137,6 +138,13 @@ public class ServerUdpThread implements Server {
         clientThreads.clear();
         serverSocket.close();
         serverSocket = null;
+    }
 
+    @Override
+    public void reset() {
+        timeForClients.reset();
+        timeForRequests.reset();
+        clientThreads.forEach(Thread::interrupt);
+        clientThreads.clear();
     }
 }

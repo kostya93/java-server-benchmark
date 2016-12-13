@@ -10,5 +10,15 @@ public class Constants {
         public final static int END_ARRAYS = 3;
     }
 
+    public static class ServerType {
+        public final static int TCP_ASYNC = 1;
+        public final static int TCP_CACHED_THREAD_POOL = 2;
+        public final static int TCP_NON_BLOCKING = 3;
+        public final static int TCP_ONE_THREAD_SEQUENTIAL = 4;
+        public final static int TCP_THREAD = 5;
+        public final static int UDP_THREAD = 6;
+        public final static int UDP_TREAD_POOL = 7;
+    }
+
     public final static int NANOS_IN_MILLIS = 1_000_000;
 }
