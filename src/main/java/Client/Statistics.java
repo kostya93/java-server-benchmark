@@ -3,7 +3,7 @@ package Client;
 /**
  * Created by kostya on 09.12.2016.
  */
-class Statistics {
+public class Statistics {
     private long timePerClientServer;
     private long timePerRequestServer;
     private long timePerClient;
