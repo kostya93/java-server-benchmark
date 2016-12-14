@@ -19,7 +19,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
 /**
  * Server processes requests asynchronously
  */
-public class ServerTcpAsync implements Server {
+class ServerTcpAsync implements Server {
     private final LongAdder timeForClients = new LongAdder();
     private final LongAdder timeForRequests = new LongAdder();
 
@@ -78,14 +78,6 @@ public class ServerTcpAsync implements Server {
                                 holder.setState(Holder.State.READING_SIZE);
                                 client.read(holder.getByteBuffer(), holder, this);
                                 break;
-                            case Constants.MessageType.STATS:
-                                ByteBuffer statsBuffer = ByteBuffer.allocate(Long.BYTES * 2);
-                                statsBuffer.putLong(timeForClients.longValue());
-                                statsBuffer.putLong(timeForRequests.longValue());
-                                statsBuffer.rewind();
-                                holder.setByteBuffer(statsBuffer);
-                                startWrite(holder, client);
-                                break;
                             case Constants.MessageType.END_ARRAYS:
                                 break;
                         }
@@ -140,17 +132,12 @@ public class ServerTcpAsync implements Server {
                     client.write(holder.getByteBuffer(), holder, this);
                     return;
                 }
-                switch (holder.getState()) {
-                    case END_WRITING_ARRAY:
-                        holder.createBuffer(Integer.BYTES);
-                        holder.setState(Holder.State.READING_TYPE);
-                        long timeEndRequest = System.nanoTime() / NANOS_IN_MILLIS;
-                        timeForRequests.add(timeEndRequest - holder.getTimeStartRequest());
-                        startRead(holder, client);
-                        break;
-                    case END_WRITING_STATS:
-                        reset();
-                        break;
+                if (holder.getState() == Holder.State.END_WRITING_ARRAY) {
+                    holder.createBuffer(Integer.BYTES);
+                    holder.setState(Holder.State.READING_TYPE);
+                    long timeEndRequest = System.nanoTime() / NANOS_IN_MILLIS;
+                    timeForRequests.add(timeEndRequest - holder.getTimeStartRequest());
+                    startRead(holder, client);
                 }
             }
 
@@ -170,10 +157,6 @@ public class ServerTcpAsync implements Server {
         serverThread.interrupt();
         listener.close();
         listener = null;
-    }
-
-    @Override
-    public void reset() {
         timeForClients.reset();
         timeForRequests.reset();
     }

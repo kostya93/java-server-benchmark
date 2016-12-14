@@ -22,9 +22,9 @@ import static Common.Constants.NANOS_IN_MILLIS;
 /**
  * Created by kostya on 11.12.2016.
  */
-public class ServerUdpThreadPool implements Server {
+class ServerUdpThreadPool implements Server {
     private DatagramSocket serverSocket;
-    private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private ExecutorService executor;
     private Thread serverThread;
 
     private final LongAdder timeForClients = new LongAdder();
@@ -32,6 +32,7 @@ public class ServerUdpThreadPool implements Server {
 
     @Override
     public void start(int port) throws IOException {
+        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         serverSocket = new DatagramSocket(port);
         serverThread = new Thread(this::runServer);
         serverThread.start();
@@ -69,39 +70,24 @@ public class ServerUdpThreadPool implements Server {
         try {
             int messageType;
             while ((messageType = getIntFromClient(clientAddr, clientPort, clientSocket)) != Constants.MessageType.END_ARRAYS) {
-                switch (messageType) {
-                    case MessageType.ARRAY: {
-                        long timeStartClient = System.nanoTime() / NANOS_IN_MILLIS;
-                        int size = getIntFromClient(clientAddr, clientPort, clientSocket);
-                        byte[] data = new byte[size];
-                        DatagramPacket datagramPacket = new DatagramPacket(data, data.length, clientAddr, clientPort);
-                        clientSocket.receive(datagramPacket);
-                        List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
-
-                        long timeStartSort = System.nanoTime() / NANOS_IN_MILLIS;
-                        List<Integer> sortedList = Server.sort(list);
-                        long timeEndSort = System.nanoTime() / NANOS_IN_MILLIS;
-                        timeForClients.add(timeEndSort - timeStartSort);
-
-                        data = Message.Array.newBuilder().addAllArray(sortedList).build().toByteArray();
-                        datagramPacket.setData(data);
-                        clientSocket.send(datagramPacket);
-                        long timeEndClient = System.nanoTime() / NANOS_IN_MILLIS;
-                        timeForRequests.add(timeEndClient - timeStartClient);
-                        break;
-                    }
-                    case MessageType.STATS: {
-                        byte[] data = ByteBuffer.allocate(Long.BYTES * 2)
-                                .putLong(timeForClients.longValue())
-                                .putLong(timeForRequests.longValue())
-                                .array();
-                        DatagramPacket datagramPacket = new DatagramPacket(data, data.length, clientAddr, clientPort);
-                        clientSocket.send(datagramPacket);
-                        reset();
-                        return;
-                    }
-                    default:
-                        throw new NotImplementedException();
+                if (messageType == MessageType.ARRAY) {
+                    long timeStartClient = System.nanoTime() / NANOS_IN_MILLIS;
+                    int size = getIntFromClient(clientAddr, clientPort, clientSocket);
+                    byte[] data = new byte[size];
+                    DatagramPacket datagramPacket = new DatagramPacket(data, data.length, clientAddr, clientPort);
+                    clientSocket.receive(datagramPacket);
+                    List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
+                    long timeStartSort = System.nanoTime() / NANOS_IN_MILLIS;
+                    List<Integer> sortedList = Server.sort(list);
+                    long timeEndSort = System.nanoTime() / NANOS_IN_MILLIS;
+                    timeForClients.add(timeEndSort - timeStartSort);
+                    data = Message.Array.newBuilder().addAllArray(sortedList).build().toByteArray();
+                    datagramPacket.setData(data);
+                    clientSocket.send(datagramPacket);
+                    long timeEndClient = System.nanoTime() / NANOS_IN_MILLIS;
+                    timeForRequests.add(timeEndClient - timeStartClient);
+                } else {
+                    throw new NotImplementedException();
                 }
             }
         } catch (IOException e) {
@@ -135,22 +121,13 @@ public class ServerUdpThreadPool implements Server {
         }
 
         serverThread.interrupt();
+        serverThread = null;
         executor.shutdown();
+        executor = null;
         serverSocket.close();
         serverSocket = null;
-    }
-
-    @Override
-    public void reset() {
         timeForClients.reset();
         timeForRequests.reset();
-        executor.shutdown();
-        try {
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
     @Override

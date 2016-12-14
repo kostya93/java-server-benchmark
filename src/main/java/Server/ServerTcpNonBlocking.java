@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 import static Common.Constants.MessageType;
@@ -22,17 +21,18 @@ import static Common.Constants.NANOS_IN_MILLIS;
  * The server performs a non-blocking processing.
  * Each request is processed by a fixed size thread pool.
  */
-public class ServerTcpNonBlocking implements Server {
+class ServerTcpNonBlocking implements Server {
     private Selector selector;
     private Thread serverThread;
     private ServerSocketChannel serverSocketChannel;
-    private ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private ExecutorService executor;
     private final Object registerLock = new Object();
     private final LongAdder timeForClients = new LongAdder();
     private final LongAdder timeForRequests = new LongAdder();
 
     @Override
     public void start(int port) throws IOException {
+        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         selector = Selector.open();
         serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.bind(new InetSocketAddress(port));
@@ -79,15 +79,6 @@ public class ServerTcpNonBlocking implements Server {
                                         holder.createBuffer(Integer.BYTES);
                                         holder.setState(Holder.State.READING_SIZE);
                                         break;
-                                    case MessageType.STATS:
-                                        holder.setState(Holder.State.WRITING_STATS);
-                                        byteBuffer = ByteBuffer.allocate(Long.BYTES * 2);
-                                        byteBuffer.putLong(timeForClients.longValue());
-                                        byteBuffer.putLong(timeForRequests.longValue());
-                                        byteBuffer.rewind();
-                                        holder.setByteBuffer(byteBuffer);
-                                        key.interestOps(SelectionKey.OP_WRITE);
-                                        break;
                                     case MessageType.END_ARRAYS:
                                         client.close();
                                         break;
@@ -112,25 +103,18 @@ public class ServerTcpNonBlocking implements Server {
                         if (holder.isWriting()) {
                             holder.write(client);
                         }
-                        switch (holder.getState()) {
-                            case END_WRITING_ARRAY:
-                                holder.createBuffer(Integer.BYTES);
-                                holder.setState(Holder.State.READING_TYPE);
-                                key.interestOps(SelectionKey.OP_READ);
-                                long timeEndRequest = System.nanoTime() / NANOS_IN_MILLIS;
-                                timeForRequests.add(timeEndRequest - holder.getTimeStartRequest());
-                                break;
-                            case END_WRITING_STATS:
-                                client.close();
-                                reset();
-                                break;
+                        if (holder.getState() == Holder.State.END_WRITING_ARRAY) {
+                            holder.createBuffer(Integer.BYTES);
+                            holder.setState(Holder.State.READING_TYPE);
+                            key.interestOps(SelectionKey.OP_READ);
+                            long timeEndRequest = System.nanoTime() / NANOS_IN_MILLIS;
+                            timeForRequests.add(timeEndRequest - holder.getTimeStartRequest());
                         }
                     }
                     iterator.remove();
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
     }
 
@@ -168,22 +152,15 @@ public class ServerTcpNonBlocking implements Server {
             return;
         }
         selector.close();
+        serverSocketChannel.close();
+        serverSocketChannel = null;
         selector = null;
         serverThread.interrupt();
+        serverThread = null;
         executor.shutdown();
-    }
-
-    @Override
-    public void reset() {
+        executor = null;
         timeForClients.reset();
         timeForRequests.reset();
-        executor.shutdown();
-        try {
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
 
     @Override

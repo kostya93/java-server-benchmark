@@ -30,7 +30,7 @@
       <RowConstraints maxHeight="-Infinity" minHeight="8.0" prefHeight="8.0" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
-      <VBox GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.rowIndex="1">
+      <VBox GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="1">
          <children>
             <ProgressBar fx:id="pbProgress" prefWidth="1920.0" progress="0.0" />
          </children>

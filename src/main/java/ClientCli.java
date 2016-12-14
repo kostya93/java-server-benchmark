@@ -10,10 +10,5 @@ import static Common.Constants.ServerType;
  */
 public class ClientCli {
     public static void main(String[] args) throws IOException, InterruptedException {
-//        ClientRunner clientRunner = new ClientRunner("localhost", 55555, ClientType.UDP, serverProcessPort, serverType);
-//        clientRunner.configureServer(ServerType.UDP_THREAD);
-//        for (int i = 1; i < 10; i++) {
-//            System.out.println(clientRunner.run(1000, i, 200, 5));
-//        }
     }
 }

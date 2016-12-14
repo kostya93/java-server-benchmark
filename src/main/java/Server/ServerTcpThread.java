@@ -19,7 +19,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
 /**
  * Server creates a separate thread to communicate by TCP with each client.
  */
-public class ServerTcpThread implements Server {
+class ServerTcpThread implements Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
     private List<Thread> clientThreads = new LinkedList<>();
@@ -36,7 +36,7 @@ public class ServerTcpThread implements Server {
 
     private void runServer() {
         try {
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSocket = serverSocket.accept();
                 Thread clientThread = new Thread(() -> processClient(clientSocket));
                 clientThreads.add(clientThread);
@@ -53,19 +53,13 @@ public class ServerTcpThread implements Server {
 
             int messageType;
             while ((messageType = inputStream.readInt()) != MessageType.END_ARRAYS) {
-                switch (messageType) {
-                    case MessageType.ARRAY:
-                        long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
-                        executeArray(inputStream, outputStream);
-                        long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
-                        timeForRequests.add(endRequestTime - startRequestTime);
-                        break;
-                    case MessageType.STATS:
-                        executeStats(outputStream);
-                        reset();
-                        return;
-                    default:
-                        throw new NotImplementedException();
+                if (messageType == MessageType.ARRAY) {
+                    long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+                    executeArray(inputStream, outputStream);
+                    long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+                    timeForRequests.add(endRequestTime - startRequestTime);
+                } else {
+                    throw new NotImplementedException();
                 }
             }
 
@@ -78,12 +72,6 @@ public class ServerTcpThread implements Server {
                 e.printStackTrace();
             }
         }
-    }
-
-    private void executeStats(DataOutputStream outputStream) throws IOException {
-        outputStream.writeLong(timeForClients.longValue());
-        outputStream.writeLong(timeForRequests.longValue());
-        outputStream.flush();
     }
 
     private void executeArray(DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
@@ -116,10 +104,6 @@ public class ServerTcpThread implements Server {
         clientThreads.forEach(Thread::interrupt);
         clientThreads.clear();
         serverThread.interrupt();
-    }
-
-    @Override
-    public void reset() throws IOException {
         timeForClients.reset();
         timeForRequests.reset();
     }

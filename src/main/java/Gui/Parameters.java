@@ -26,53 +26,55 @@ class Parameters {
         this.serverType = serverType;
     }
 
-    public String getVariableParameter() {
+    String getVariableParameter() {
         return variableParameter;
     }
 
-    public int getMin() {
+    int getMin() {
         return min;
     }
 
-    public int getMax() {
+    int getMax() {
         return max;
     }
 
-    public int getStep() {
+    int getStep() {
         return step;
     }
 
-    public int getNumOfRequests() {
+    int getNumOfRequests() {
         return numOfRequests;
     }
 
-    public int getNumOfClients() {
+    int getNumOfClients() {
         return numOfClients;
     }
 
-    public int getDelta() {
+    int getDelta() {
         return delta;
     }
 
-    public int getServerType() {
+    int getServerType() {
         return serverType;
     }
 
-    public int getNumOfElements() {
+    int getNumOfElements() {
         return numOfElements;
     }
 
     @Override
     public String toString() {
+        String nl = System.getProperty("line.separator");
         return String.format(
-                "Изменяемый параметр: %s\n" +
-                        "Min: %d\n" +
-                        "Max: %d\n" +
-                        "Step: %d\n" +
-                        "Количество запросов: %d\n" +
-                        "Количество элементов: %d\n" +
-                        "Количество клиентов: %d\n" +
-                        "Пауза между запросами: %d\n",
-                variableParameter, min, max, step, numOfRequests,numOfElements, numOfClients, delta);
+                "Изменяемый параметр: %s" + nl +
+                        "Min: %d" + nl +
+                        "Max: %d" + nl +
+                        "Step: %d" + nl +
+                        "Количество запросов, X: %d" + nl +
+                        "Количество элементов, N: %d" + nl +
+                        "Количество клиентов, M: %d" + nl +
+                        "Пауза между запросами, Δ: %d" + nl +
+                        "Архитектура: %d",
+                variableParameter, min, max, step, numOfRequests,numOfElements, numOfClients, delta, serverType);
     }
 }

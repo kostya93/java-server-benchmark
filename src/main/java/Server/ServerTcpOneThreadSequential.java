@@ -20,7 +20,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
  * Requests are processed sequentially with
  * closing connection after sending response.
  */
-public class ServerTcpOneThreadSequential implements Server {
+class ServerTcpOneThreadSequential implements Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
 
@@ -50,26 +50,14 @@ public class ServerTcpOneThreadSequential implements Server {
         DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
 
         int messageType = inputStream.readInt();
-        switch (messageType) {
-            case Constants.MessageType.ARRAY:
-                long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
-                executeArray(inputStream, outputStream);
-                long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
-                timeForRequests.add(endRequestTime - startRequestTime);
-                break;
-            case Constants.MessageType.STATS:
-                executeStats(outputStream);
-                reset();
-                break;
-            default:
-                throw new NotImplementedException();
+        if (messageType == Constants.MessageType.ARRAY) {
+            long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+            executeArray(inputStream, outputStream);
+            long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+            timeForRequests.add(endRequestTime - startRequestTime);
+        } else {
+            throw new NotImplementedException();
         }
-    }
-
-    private void executeStats(DataOutputStream outputStream) throws IOException {
-        outputStream.writeLong(timeForClients.longValue());
-        outputStream.writeLong(timeForRequests.longValue());
-        outputStream.flush();
     }
 
     private void executeArray(DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
@@ -101,10 +89,6 @@ public class ServerTcpOneThreadSequential implements Server {
         serverThread.interrupt();
         serverSocket.close();
         serverSocket = null;
-    }
-
-    @Override
-    public void reset() {
         timeForClients.reset();
         timeForRequests.reset();
     }

@@ -23,16 +23,17 @@ import static Common.Constants.NANOS_IN_MILLIS;
  * Server creates a task to communicate by TCP with each client,
  * and summit it to CachedThreadPool.
  */
-public class ServerTcpCachedThreadPool implements Server {
+class ServerTcpCachedThreadPool implements Server {
     private ServerSocket serverSocket;
     private Thread serverThread;
-    private ExecutorService executor = Executors.newCachedThreadPool();
+    private ExecutorService executor;
 
     private final LongAdder timeForClients = new LongAdder();
     private final LongAdder timeForRequests = new LongAdder();
 
     @Override
     public void start(int port) throws IOException {
+        executor = Executors.newCachedThreadPool();
         serverSocket = new ServerSocket(port);
         serverThread = new Thread(this::runServer);
         serverThread.start();
@@ -40,7 +41,7 @@ public class ServerTcpCachedThreadPool implements Server {
 
     private void runServer() {
         try {
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSocket = serverSocket.accept();
                 executor.submit(() -> processClient(clientSocket));
             }
@@ -55,18 +56,13 @@ public class ServerTcpCachedThreadPool implements Server {
 
             int messageType;
             while ((messageType = inputStream.readInt()) != MessageType.END_ARRAYS) {
-                switch (messageType) {
-                    case MessageType.ARRAY:
-                        long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
-                        executeArray(inputStream, outputStream);
-                        long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
-                        timeForRequests.add(endRequestTime - startRequestTime);
-                        break;
-                    case MessageType.STATS:
-                        executeStats(outputStream);
-                        return;
-                    default:
-                        throw new NotImplementedException();
+                if (messageType == MessageType.ARRAY) {
+                    long startRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+                    executeArray(inputStream, outputStream);
+                    long endRequestTime = System.nanoTime() / NANOS_IN_MILLIS;
+                    timeForRequests.add(endRequestTime - startRequestTime);
+                } else {
+                    throw new NotImplementedException();
                 }
             }
         } catch (IOException e) {
@@ -78,14 +74,6 @@ public class ServerTcpCachedThreadPool implements Server {
                 e.printStackTrace();
             }
         }
-    }
-
-    private void executeStats(OutputStream outputStream) throws IOException {
-        DataOutputStream dataOutputStream = new DataOutputStream(outputStream);
-        dataOutputStream.writeLong(timeForClients.longValue());
-        dataOutputStream.writeLong(timeForRequests.longValue());
-        dataOutputStream.flush();
-        reset();
     }
 
     private void executeArray(DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
@@ -113,24 +101,12 @@ public class ServerTcpCachedThreadPool implements Server {
         if (serverSocket == null) {
             return;
         }
-
         serverSocket.close();
         serverSocket = null;
         executor.shutdown();
         serverThread.interrupt();
-    }
-
-    @Override
-    public void reset() {
         timeForClients.reset();
         timeForRequests.reset();
-        executor.shutdown();
-        try {
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        executor = Executors.newCachedThreadPool();
     }
 
     @Override
