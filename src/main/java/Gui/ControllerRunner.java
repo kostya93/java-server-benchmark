@@ -47,8 +47,8 @@ public class ControllerRunner {
 
     public void handleRun(ActionEvent actionEvent) throws IOException {
         btRun.setDisable(true);
-        ClientRunner clientRunner = new ClientRunner("localhost", 55555, Constants.ClientType.TCP_PERMANENT);
-        clientRunner.configureServer(Common.Constants.ServerType.TCP_THREAD);
+        ClientRunner clientRunner = new ClientRunner("localhost",
+                44444, 55555, Constants.ClientType.TCP_PERMANENT, parameters.getServerType());
         XYChart.Series<Number, Number> timePerRequestServer = new XYChart.Series();
         XYChart.Series<Number, Number> timePerClientServer = new XYChart.Series();
         XYChart.Series<Number, Number> timePerClient = new XYChart.Series();
@@ -64,6 +64,7 @@ public class ControllerRunner {
                 switch (parameters.getVariableParameter()) {
                     case "N":
                         setXAxisLabels("N, количество элементов");
+                        clientRunner.startServer();
                         for (int n = parameters.getMin(), i = 1; n <= parameters.getMax(); n += parameters.getStep(), i++) {
                             Statistics statistics = clientRunner.run(
                                     n,
@@ -71,11 +72,14 @@ public class ControllerRunner {
                                     parameters.getDelta(),
                                     parameters.getNumOfRequests()
                             );
+                            clientRunner.resetServer();
                             updateChartsAndProgress(i, numOfIteration, statistics, n);
                         }
+                        clientRunner.exitServer();
                         break;
                     case "M":
                         setXAxisLabels("M, количество клиентов");
+                        clientRunner.startServer();
                         for (int m = parameters.getMin(), i = 1; m <= parameters.getMax(); m += parameters.getStep(), i++) {
                             Statistics statistics = clientRunner.run(
                                     parameters.getNumOfElements(),
@@ -83,11 +87,14 @@ public class ControllerRunner {
                                     parameters.getDelta(),
                                     parameters.getNumOfRequests()
                             );
+                            clientRunner.resetServer();
                             updateChartsAndProgress(i, numOfIteration, statistics, m);
                         }
+                        clientRunner.exitServer();
                         break;
                     case "D":
                         setXAxisLabels("Δ, пауза между запросами");
+                        clientRunner.startServer();
                         for (int d = parameters.getMin(), i = 1; d <= parameters.getMax(); d += parameters.getStep(), i++) {
                             Statistics statistics = clientRunner.run(
                                     parameters.getNumOfElements(),
@@ -95,8 +102,10 @@ public class ControllerRunner {
                                     d,
                                     parameters.getNumOfRequests()
                             );
+                            clientRunner.resetServer();
                             updateChartsAndProgress(i, numOfIteration, statistics, d);
                         }
+                        clientRunner.exitServer();
                         break;
                 }
                 return null;

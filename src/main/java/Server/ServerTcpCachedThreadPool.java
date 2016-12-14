@@ -132,4 +132,14 @@ public class ServerTcpCachedThreadPool implements Server {
         }
         executor = Executors.newCachedThreadPool();
     }
+
+    @Override
+    public long getTimeForClients() {
+        return timeForClients.longValue();
+    }
+
+    @Override
+    public long getTimeForRequests() {
+        return timeForRequests.longValue();
+    }
 }

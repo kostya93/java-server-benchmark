@@ -185,4 +185,14 @@ public class ServerTcpNonBlocking implements Server {
         }
         executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
+
+    @Override
+    public long getTimeForClients() {
+        return timeForClients.longValue();
+    }
+
+    @Override
+    public long getTimeForRequests() {
+        return timeForRequests.longValue();
+    }
 }

@@ -5,18 +5,13 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 
 import static Client.Constants.ClientType;
-import static Common.Constants.MessageType;
-import static Common.Constants.NANOS_IN_MILLIS;
+import static Common.Constants.*;
 
 /**
  * Created by kostya on 08.12.2016.
@@ -24,17 +19,24 @@ import static Common.Constants.NANOS_IN_MILLIS;
 
 public class ClientRunner {
     private final String serverHost;
-    private final int serverPort;
+    private final int serverConfigPort;
     private final ClientType clientType;
+    private final int serverProcessPort;
+    private final int serverType;
 
     private final List<Thread> clients;
     private final LongAdder clientsTime = new LongAdder();
+    private Socket socket;
 
     public ClientRunner(String serverHost,
-                        int serverPort,
-                        ClientType clientType) {
+                        int serverConfigPort,
+                        int serverProcessPort,
+                        ClientType clientType,
+                        int serverType) {
         this.serverHost = serverHost;
-        this.serverPort = serverPort;
+        this.serverConfigPort = serverConfigPort;
+        this.serverProcessPort = serverProcessPort;
+        this.serverType = serverType;
         this.clients = new ArrayList<>();
         this.clientType = clientType;
     }
@@ -47,7 +49,7 @@ public class ClientRunner {
             clients.add(new Thread(() -> {
                 try {
                     long start = System.nanoTime();
-                    getClient().run(serverHost, serverPort, numOfElements, delta, numOfRequests);
+                    getClient().run(serverHost, serverProcessPort, numOfElements, delta, numOfRequests);
                     long end = System.nanoTime();
                     clientsTime.add((end - start) / NANOS_IN_MILLIS);
                 } catch (IOException | InterruptedException e) {
@@ -67,11 +69,37 @@ public class ClientRunner {
         return getStatistics(numOfClient, numOfRequests);
     }
 
-    public void configureServer(int serverType) throws IOException {
-        try (Socket socket = new Socket(serverHost, serverPort)) {
-            DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-            outputStream.writeInt(serverType);
-            outputStream.flush();
+    public boolean startServer() throws IOException {
+        if (socket == null) {
+            socket = new Socket(serverHost, serverConfigPort);
+        }
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        dataOutputStream.writeInt(ConfigureMessage.START_SERVER);
+        dataOutputStream.writeInt(serverType);
+        dataOutputStream.writeInt(serverProcessPort);
+        dataOutputStream.flush();
+        DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+        return dataInputStream.readBoolean();
+    }
+
+    public boolean resetServer() throws IOException {
+        if (socket != null) {
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.writeInt(ConfigureMessage.RESET_SERVER);
+            dataOutputStream.flush();
+            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+            return dataInputStream.readBoolean();
+        }
+        return false;
+    }
+
+    public void exitServer() throws IOException {
+        if (socket != null) {
+            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.writeInt(ConfigureMessage.EXIT);
+            dataOutputStream.flush();
+            socket.close();
+            socket = null;
         }
     }
 
@@ -88,38 +116,17 @@ public class ClientRunner {
     }
 
     private Statistics getStatistics(int numOfClient, int numOfRequests) throws IOException {
-        switch (clientType) {
-            case TCP_NON_PERMANENT:
-            case TCP_PERMANENT:
-                try (Socket socket = new Socket(serverHost, serverPort)) {
-                    DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-                    outputStream.writeInt(MessageType.STATS);
-                    outputStream.flush();
-                    Statistics statistics = new Statistics();
-                    DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                    statistics.setTimePerClientServer(dataInputStream.readLong() / numOfClient);
-                    statistics.setTimePerRequestServer(dataInputStream.readLong() / numOfRequests);
-                    statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
-                    return statistics;
-                }
-            case UDP:
-                try (DatagramSocket datagramSocket = new DatagramSocket()) {
-                    byte[] data = ByteBuffer.allocate(Integer.BYTES).putInt(MessageType.STATS).array();
-                    DatagramPacket packet = new DatagramPacket(data, data.length, InetAddress.getByName(serverHost), serverPort);
-                    datagramSocket.send(packet);
-
-                    data = new byte[Long.BYTES * 2];
-                    packet.setData(data);
-                    datagramSocket.receive(packet);
-
-                    ByteBuffer byteBuffer = ByteBuffer.wrap(packet.getData());
-                    Statistics statistics = new Statistics();
-                    statistics.setTimePerClientServer(byteBuffer.getLong() / numOfClient);
-                    statistics.setTimePerRequestServer(byteBuffer.getLong() / numOfRequests);
-                    statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
-                    return statistics;
-                }
+        if (socket == null) {
+            return null;
         }
-        throw new NotImplementedException();
+        DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+        dataOutputStream.writeInt(ConfigureMessage.STATS);
+        dataOutputStream.flush();
+        Statistics statistics = new Statistics();
+        statistics.setTimePerClientServer(dataInputStream.readLong() / numOfClient);
+        statistics.setTimePerRequestServer(dataInputStream.readLong() / numOfRequests);
+        statistics.setTimePerClient(clientsTime.longValue() / numOfClient);
+        return statistics;
     }
 }

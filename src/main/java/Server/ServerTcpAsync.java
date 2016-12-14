@@ -177,4 +177,14 @@ public class ServerTcpAsync implements Server {
         timeForClients.reset();
         timeForRequests.reset();
     }
+
+    @Override
+    public long getTimeForClients() {
+        return timeForClients.longValue();
+    }
+
+    @Override
+    public long getTimeForRequests() {
+        return timeForRequests.longValue();
+    }
 }

@@ -147,4 +147,14 @@ public class ServerUdpThread implements Server {
         clientThreads.forEach(Thread::interrupt);
         clientThreads.clear();
     }
+
+    @Override
+    public long getTimeForClients() {
+        return timeForClients.longValue();
+    }
+
+    @Override
+    public long getTimeForRequests() {
+        return timeForRequests.longValue();
+    }
 }

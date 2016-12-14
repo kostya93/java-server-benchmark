@@ -119,10 +119,18 @@ public class ServerTcpThread implements Server {
     }
 
     @Override
-    public void reset() {
+    public void reset() throws IOException {
         timeForClients.reset();
         timeForRequests.reset();
-        clientThreads.forEach(Thread::interrupt);
-        clientThreads.clear();
+    }
+
+    @Override
+    public long getTimeForClients() {
+        return timeForClients.longValue();
+    }
+
+    @Override
+    public long getTimeForRequests() {
+        return timeForRequests.longValue();
     }
 }

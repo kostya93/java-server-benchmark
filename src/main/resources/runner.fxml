@@ -3,73 +3,62 @@
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="813.0" prefWidth="601.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Gui.ControllerRunner">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="813.0" prefWidth="1035.0" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Gui.ControllerRunner">
   <columnConstraints>
       <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="8.0" prefWidth="8.0" />
-    <ColumnConstraints hgrow="SOMETIMES" maxWidth="587.0" minWidth="10.0" prefWidth="135.0" />
-      <ColumnConstraints hgrow="SOMETIMES" maxWidth="587.0" minWidth="10.0" prefWidth="72.0" />
-      <ColumnConstraints hgrow="SOMETIMES" maxWidth="587.0" minWidth="10.0" prefWidth="370.0" />
-    <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="8.0" prefWidth="8.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="510.0" />
+      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="509.0" />
+      <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="8.0" prefWidth="8.0" />
   </columnConstraints>
   <rowConstraints>
     <RowConstraints maxHeight="-Infinity" minHeight="0.0" prefHeight="8.0" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="-Infinity" minHeight="10.0" prefHeight="22.0" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="-Infinity" minHeight="5.0" prefHeight="31.0" vgrow="SOMETIMES" />
-    <RowConstraints minHeight="10.0" prefHeight="704.0" vgrow="SOMETIMES" />
-    <RowConstraints maxHeight="-Infinity" minHeight="0.0" prefHeight="7.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="704.0" minHeight="10.0" prefHeight="360.0" vgrow="SOMETIMES" />
+    <RowConstraints maxHeight="387.0" minHeight="0.0" prefHeight="357.0" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="-Infinity" minHeight="0.0" prefHeight="27.0" vgrow="SOMETIMES" />
       <RowConstraints maxHeight="-Infinity" minHeight="8.0" prefHeight="8.0" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
-      <VBox alignment="CENTER" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="2">
+      <VBox GridPane.columnSpan="5">
          <children>
-            <Label text="Результаты">
-               <font>
-                  <Font size="14.0" />
-               </font></Label>
+            <ProgressBar fx:id="pbProgress" prefWidth="1920.0" progress="0.0" />
          </children>
       </VBox>
-      <ProgressBar fx:id="pbProgress" prefWidth="200.0" progress="0.0" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-      <VBox GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="3">
-         <children>
-            <LineChart fx:id="lchTimeRequestServer" animated="false" legendVisible="false" title="Время обработки запроса на сервере, ms">
-              <xAxis>
-                <NumberAxis side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis label="ms" side="LEFT" />
-              </yAxis>
-            </LineChart>
-            <LineChart fx:id="lchTimeClientServer" animated="false" legendVisible="false" title="Время обработки клиента на сервере, ms">
-              <xAxis>
-                <NumberAxis side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                  <NumberAxis label="ms" side="LEFT" />
-              </yAxis>
-            </LineChart>
-            <LineChart fx:id="lchTimeClient" animated="false" legendVisible="false" title="Среднее время работы клиента, ms">
-              <xAxis>
-                <NumberAxis side="BOTTOM" />
-              </xAxis>
-              <yAxis>
-                  <NumberAxis label="ms" side="LEFT" />
-              </yAxis>
-            </LineChart>
-         </children>
-      </VBox>
-      <VBox alignment="BOTTOM_RIGHT" GridPane.columnIndex="3" GridPane.rowIndex="5">
+      <LineChart fx:id="lchTimeRequestServer" animated="false" legendVisible="false" title="Время обработки запроса на сервере, ms" GridPane.columnIndex="1" GridPane.rowIndex="3">
+        <xAxis>
+          <NumberAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis label="ms" side="LEFT" />
+        </yAxis>
+      </LineChart>
+      <VBox alignment="BOTTOM_RIGHT" GridPane.columnIndex="2" GridPane.rowIndex="5">
          <children>
             <Button fx:id="btRun" mnemonicParsing="false" onAction="#handleRun" prefHeight="25.0" prefWidth="54.0" text="Run" />
          </children>
       </VBox>
+      <LineChart fx:id="lchTimeClient" animated="false" legendVisible="false" title="Среднее время работы клиента, ms" GridPane.columnIndex="2" GridPane.rowIndex="3">
+        <xAxis>
+          <NumberAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+            <NumberAxis label="ms" side="LEFT" />
+        </yAxis>
+      </LineChart>
+      <LineChart fx:id="lchTimeClientServer" animated="false" legendVisible="false" title="Время обработки клиента на сервере, ms" GridPane.columnIndex="1" GridPane.rowIndex="4">
+        <xAxis>
+          <NumberAxis side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+            <NumberAxis label="ms" side="LEFT" />
+        </yAxis>
+      </LineChart>
    </children>
 </GridPane>

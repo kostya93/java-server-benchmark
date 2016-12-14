@@ -7,6 +7,6 @@ import java.io.IOException;
  */
 public class ServerCli {
     public static void main(String[] args) throws IOException {
-        ServerRunner.run(55555);
+        ServerRunner.run(44444);
     }
 }

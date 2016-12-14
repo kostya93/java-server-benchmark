@@ -13,7 +13,7 @@ public interface Server {
 
     void stop() throws IOException;
 
-    void reset();
+    void reset() throws IOException;
 
     static List<Integer> sort(List<Integer> input) {
         for (int i = input.size() - 1; i > 0; i--) {
@@ -25,4 +25,7 @@ public interface Server {
         }
         return input;
     }
+
+    long getTimeForClients();
+    long getTimeForRequests();
 }
