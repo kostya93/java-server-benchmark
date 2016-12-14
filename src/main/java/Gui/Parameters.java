@@ -61,4 +61,18 @@ class Parameters {
     public int getNumOfElements() {
         return numOfElements;
     }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "Изменяемый параметр: %s\n" +
+                        "Min: %d\n" +
+                        "Max: %d\n" +
+                        "Step: %d\n" +
+                        "Количество запросов: %d\n" +
+                        "Количество элементов: %d\n" +
+                        "Количество клиентов: %d\n" +
+                        "Пауза между запросами: %d\n",
+                variableParameter, min, max, step, numOfRequests,numOfElements, numOfClients, delta);
+    }
 }

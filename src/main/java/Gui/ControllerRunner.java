@@ -22,7 +22,6 @@ import java.io.IOException;
  */
 public class ControllerRunner {
     private Parameters parameters;
-
     @FXML
     private LineChart<Number, Number> lchTimeRequestServer;
 
@@ -41,8 +40,12 @@ public class ControllerRunner {
     @FXML
     private Button btRun;
 
+    @FXML
+    public Label lbParams;
+
     void setParameters(Parameters parameters) {
         this.parameters = parameters;
+        lbParams.setText(parameters.toString());
     }
 
     public void handleRun(ActionEvent actionEvent) throws IOException {

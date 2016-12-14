@@ -7,6 +7,8 @@ import java.io.IOException;
  */
 public class ServerCli {
     public static void main(String[] args) throws IOException {
-        ServerRunner.run(44444);
+        while (true) {
+            ServerRunner.run(44444);
+        }
     }
 }
