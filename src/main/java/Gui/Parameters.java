@@ -66,15 +66,15 @@ class Parameters {
     public String toString() {
         String nl = System.getProperty("line.separator");
         return String.format(
-                "Изменяемый параметр: %s" + nl +
+                "Variable parameter: %s" + nl +
                         "Min: %d" + nl +
                         "Max: %d" + nl +
                         "Step: %d" + nl +
-                        "Количество запросов, X: %d" + nl +
-                        "Количество элементов, N: %d" + nl +
-                        "Количество клиентов, M: %d" + nl +
-                        "Пауза между запросами, Δ: %d" + nl +
-                        "Архитектура: %d",
+                        "The number of requests, X: %d" + nl +
+                        "The number of elements, N: %d" + nl +
+                        "The number of clients, M: %d" + nl +
+                        "delta, Δ: %d" + nl +
+                        "Architecture: %d",
                 variableParameter, min, max, step, numOfRequests,numOfElements, numOfClients, delta, serverType);
     }
 }
