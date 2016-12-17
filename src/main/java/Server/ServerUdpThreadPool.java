@@ -24,6 +24,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
  * Created by kostya on 11.12.2016.
  */
 class ServerUdpThreadPool implements Server {
+    private static final int MAX_CLIENTS = 50;
     private static final int MAX_MESSAGE_SIZE = 200_000;
     private DatagramSocket serverSocket;
     private ExecutorService executor;
@@ -36,6 +37,7 @@ class ServerUdpThreadPool implements Server {
     public void start(int port) throws IOException {
         executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         serverSocket = new DatagramSocket(port);
+        serverSocket.setReceiveBufferSize(MAX_CLIENTS * MAX_MESSAGE_SIZE);
         serverThread = new Thread(this::runServer);
         serverThread.start();
     }

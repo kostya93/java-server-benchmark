@@ -1,6 +1,7 @@
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'gradle-one-jar'
 
 sourceCompatibility = 1.8
 
@@ -12,3 +13,27 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     compile 'com.google.protobuf:protobuf-java:3.0.0'
 }
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.github.rholder:gradle-one-jar:1.0.4'
+    }
+}
+
+task clientCli(type: OneJar) {
+    mainClass = 'ClientCli'
+    archiveName = 'client-cli.jar'
+}
+
+task serverCli(type: OneJar) {
+    mainClass = 'ServerCli'
+    archiveName = 'server-cli.jar'
+}
+
+
+task all() {}
+all.dependsOn clientCli
+all.dependsOn serverCli

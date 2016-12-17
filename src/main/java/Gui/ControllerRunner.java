@@ -45,9 +45,6 @@ public class ControllerRunner {
     private ProgressBar pbProgress;
 
     @FXML
-    private Label tfProgress;
-
-    @FXML
     private Button btRun;
 
     @FXML

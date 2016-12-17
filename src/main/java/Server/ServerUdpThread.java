@@ -18,6 +18,7 @@ import static Common.Constants.NANOS_IN_MILLIS;
  */
 
 class ServerUdpThread implements Server {
+    private static final int MAX_CLIENTS = 50;
     private static final int MAX_MESSAGE_SIZE = 200_000;
     private DatagramSocket serverSocket;
     private Thread serverThread;
@@ -29,6 +30,7 @@ class ServerUdpThread implements Server {
     @Override
     public void start(int port) throws IOException {
         serverSocket = new DatagramSocket(port);
+        serverSocket.setReceiveBufferSize(MAX_CLIENTS * MAX_MESSAGE_SIZE);
         serverThread = new Thread(this::runServer);
         serverThread.start();
     }
@@ -49,10 +51,10 @@ class ServerUdpThread implements Server {
         }
     }
 
-    private void processClient(DatagramPacket datagramPacket) {
+    private void processClient(DatagramPacket request) {
         try {
             long timeStartClient = System.nanoTime() / NANOS_IN_MILLIS;
-            byte[] data = Arrays.copyOfRange(datagramPacket.getData(), 0, datagramPacket.getLength());
+            byte[] data = Arrays.copyOfRange(request.getData(), 0, request.getLength());
             List<Integer> list = new ArrayList<>(Message.Array.parseFrom(data).getArrayList());
 
             long timeStartSort = System.nanoTime() / NANOS_IN_MILLIS;
@@ -61,8 +63,8 @@ class ServerUdpThread implements Server {
             timeForClients.add(timeEndSort - timeStartSort);
 
             data = Message.Array.newBuilder().addAllArray(sortedList).build().toByteArray();
-            datagramPacket.setData(data);
-            serverSocket.send(datagramPacket);
+            DatagramPacket response = new DatagramPacket(data, data.length, request.getAddress(), request.getPort());
+            serverSocket.send(response);
 
             long timeEndClient = System.nanoTime() / NANOS_IN_MILLIS;
             timeForRequests.add(timeEndClient - timeStartClient);

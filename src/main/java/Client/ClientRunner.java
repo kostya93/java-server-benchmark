@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 import static Client.Constants.ClientType;
@@ -83,6 +86,7 @@ public class ClientRunner {
     }
 
     public boolean resetServer() throws IOException {
+        clientsTime.reset();
         if (socket != null) {
             DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.writeInt(ConfigureMessage.RESET_SERVER);

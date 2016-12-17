@@ -22,10 +22,11 @@ class ClientUdp implements Client {
             for (int i = 0; i < X; i++) {
                 Message.Array array = Message.Array.newBuilder().addAllArray(Client.generateList(N)).build();
                 byte[] data = array.toByteArray();
-                DatagramPacket datagramPacket = new DatagramPacket(data, data.length, InetAddress.getByName(host), port);
-                datagramSocket.send(datagramPacket);
-                datagramSocket.receive(datagramPacket);
-                Message.Array.parseFrom(datagramPacket.getData()).getArrayList();
+                DatagramPacket request = new DatagramPacket(data, data.length, InetAddress.getByName(host), port);
+                datagramSocket.send(request);
+                DatagramPacket response = new DatagramPacket(new byte[data.length], data.length);
+                datagramSocket.receive(response);
+                Message.Array.parseFrom(response.getData()).getArrayList();
                 Thread.sleep(delta);
             }
         }

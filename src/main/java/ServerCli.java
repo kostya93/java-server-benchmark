@@ -8,6 +8,7 @@ import java.io.IOException;
 public class ServerCli {
     public static void main(String[] args) throws IOException {
         while (true) {
+            System.out.println("new client");
             ServerRunner.run(44444);
         }
     }

@@ -27,6 +27,7 @@ public class ServerRunner {
                     configMessage = dataInputStream.readInt();
                     switch (configMessage) {
                         case Constants.ConfigureMessage.START_SERVER:
+                            System.out.println("START_SERVER");
                             serverType = dataInputStream.readInt();
                             processPort = dataInputStream.readInt();
                             server = getServer(serverType);
@@ -42,6 +43,7 @@ public class ServerRunner {
                             dataOutputStream.flush();
                             break;
                         case Constants.ConfigureMessage.RESET_SERVER:
+                            System.out.println("RESET_SERVER");
                             if (server != null) {
                                 server.stop();
                                 server.start(processPort);

@@ -47,5 +47,3 @@ fabric.properties
 build/
 bin/
 
-#Results
-*.txt
